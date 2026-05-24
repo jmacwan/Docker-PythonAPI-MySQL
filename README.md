@@ -1,7 +1,7 @@
 # Docker-PythonAPI-MySQL
 complete, working sample Docker project that runs a Python API (FastAPI) connected to a MySQL database, using Docker Compose
 
-1. Project Structure — What Each Part Represents
+**1. Project Structure — What Each Part Represents**
 Code
 myproject/
 │
@@ -16,14 +16,14 @@ myproject/
 └── docker-compose.yml
 This structure separates your application layer, database layer, and orchestration layer.
 
-2. The Python API (FastAPI)
-app/main.py
+**2. The Python API (FastAPI)**
+'app/main.py'
 This file defines your web API.
 
 What happens inside:
 a) FastAPI app creation
 python
-app = FastAPI()
+'app = FastAPI()'
 This creates the ASGI application object. Uvicorn will run this object as the web server.
 
 b) Database connection function
