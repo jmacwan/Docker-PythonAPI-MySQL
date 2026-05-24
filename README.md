@@ -70,9 +70,6 @@ This is a real working API endpoint backed by a real database.
 
 3. Python Dockerfile — How the API Container Is Built
 
-
-
-
 app/Dockerfile
 dockerfile
 FROM python:3.11-slim
@@ -109,9 +106,6 @@ This container becomes your web service.
 4. MySQL Initialization Script
 db/init.sql
 
-
-
-
 This script is automatically executed by MySQL on first startup.
 
 sql
@@ -137,7 +131,6 @@ This is how you bootstrap a database in Docker.
 
 5. Docker Compose — The Orchestrator
 docker-compose.yml
-
 
 This file defines how all containers run together.
 
@@ -220,10 +213,6 @@ Isolated environment
 This is why you don’t need IP addresses.
 
 7. How Data Persistence Works
-
-
-
-
 The volume:
 
 yaml
