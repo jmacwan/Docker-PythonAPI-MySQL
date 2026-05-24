@@ -7,11 +7,11 @@ Run a Python FastAPI app and a MySQL database together using Docker.
 Use Docker Compose to manage both services easily.
 
 2. Folder Structure
-app/ → Python API code + Dockerfile
+**app/ → Python API code + Dockerfile**
 
-db/ → SQL file to initialize MySQL
+**db/ → SQL file to initialize MySQL**
 
-docker-compose.yml → Defines and runs both containers
+**docker-compose.yml → Defines and runs both containers**
 
 3. Python API (FastAPI)
 main.py:
