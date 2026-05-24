@@ -1,260 +1,90 @@
 # Docker-PythonAPI-MySQL
 complete, working sample Docker project that runs a Python API (FastAPI) connected to a MySQL database, using Docker Compose
 
-**1. Project Structure — What Each Part Represents**
-Code
-myproject/
-│
-├── app/
-│   ├── main.py
-│   ├── requirements.txt
-│   └── Dockerfile
-│
-├── db/
-│   └── init.sql
-│
-└── docker-compose.yml
-This structure separates your application layer, database layer, and orchestration layer.
+1. Project Purpose
+Run a Python FastAPI app and a MySQL database together using Docker.
 
-**2. The Python API (FastAPI)**
-'''app/main.py'''
-This file defines your web API.
+Use Docker Compose to manage both services easily.
 
-What happens inside:
-a) FastAPI app creation
-python
-'app = FastAPI()'
-This creates the ASGI application object. Uvicorn will run this object as the web server.
+2. Folder Structure
+app/ → Python API code + Dockerfile
 
-b) Database connection function
-python
-def get_connection():
-    return mysql.connector.connect(
-        host="mysql",
-        user="root",
-        password="rootpassword",
-        database="mydb"
-    )
-Key detail:
-host="mysql" works because Docker Compose creates an internal DNS entry for the MySQL container.
-Inside the network, the MySQL container is reachable simply as:
+db/ → SQL file to initialize MySQL
 
-Code
-mysql
-No IPs needed.
+docker-compose.yml → Defines and runs both containers
 
-c) API endpoints
-python
-@app.get("/")
-def root():
-    return {"message": "Python API + MySQL via Docker!"}
-This is a simple health check endpoint.
+3. Python API (FastAPI)
+main.py:
 
-python
-@app.get("/users")
-def get_users():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM users;")
-    rows = cursor.fetchall()
-    return {"users": rows}
-This endpoint:
+Creates FastAPI app
 
-Connects to MySQL
+Connects to MySQL using hostname mysql
 
-Runs a SQL query
+/ endpoint → returns a message
 
-Returns the results as JSON
+/users endpoint → returns users from database
 
-This is a real working API endpoint backed by a real database.
+requirements.txt → lists Python dependencies
 
-3. Python Dockerfile — How the API Container Is Built
+Dockerfile → builds the API image:
 
-app/Dockerfile
-dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-EXPOSE 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-What each step does:
-FROM python:3.11-slim  
-Lightweight Python base image.
+Uses Python 3.11
 
-WORKDIR /app  
-All commands run inside /app.
+Installs dependencies
 
-COPY requirements.txt .  
-Copies only the dependency file first → enables Docker caching.
+Runs Uvicorn on port 8000
 
-RUN pip install …  
-Installs dependencies inside the image.
+4. MySQL Database
+init.sql:
 
-COPY . .  
-Copies your application code.
+Creates database mydb
 
-EXPOSE 8000  
-Documents that the app listens on port 8000.
+Creates users table
 
-CMD ["uvicorn", ...]  
-Starts the FastAPI server.
+Inserts sample users (Alice, Bob, Charlie)
 
-This container becomes your web service.
+MySQL container automatically runs this file on first startup.
 
-4. MySQL Initialization Script
-db/init.sql
+5. Docker Compose
+Defines two services:
 
-This script is automatically executed by MySQL on first startup.
+a) api
+Builds from app/
 
-sql
-CREATE DATABASE IF NOT EXISTS mydb;
+Exposes port 8000
 
-USE mydb;
+Depends on MySQL
 
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100)
-);
+Shares the same internal network
 
-INSERT INTO users (name) VALUES ("Alice"), ("Bob"), ("Charlie");
-This ensures:
+b) mysql
+Uses official MySQL image
 
-The database exists
+Loads init.sql automatically
 
-The users table exists
+Stores data in a persistent volume
 
-Sample data is inserted
+Exposes port 3306
 
-This is how you bootstrap a database in Docker.
+6. Networking
+Docker Compose creates a private network.
 
-5. Docker Compose — The Orchestrator
-docker-compose.yml
+API connects to MySQL using hostname: mysql
 
-This file defines how all containers run together.
+No IP address needed.
 
-🔹 Service 1: API
-yaml
-api:
-  build: ./app
-  container_name: python_api
-  ports:
-    - "8000:8000"
-  depends_on:
-    - mysql
-  networks:
-    - backend
-What this means:
-build: ./app → Build the API image from the Dockerfile in app/
+7. Data Persistence
+MySQL data stored in a Docker volume:
 
-ports: "8000:8000" → Expose API to your host machine
+Data survives container restarts
 
-depends_on: mysql → Start MySQL before the API
+Safe and persistent
 
-networks: backend → API joins the internal network
-
-🔹 Service 2: MySQL
-yaml
-mysql:
-  image: mysql:8.0
-  environment:
-    MYSQL_ROOT_PASSWORD: rootpassword
-    MYSQL_DATABASE: mydb
-  volumes:
-    - mysql_data:/var/lib/mysql
-    - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
-  ports:
-    - "3306:3306"
-  networks:
-    - backend
-Key behaviors:
-a) MySQL image
-Uses the official MySQL 8.0 image.
-
-b) Environment variables
-These configure MySQL on startup.
-
-c) Volumes
-Two important mounts:
-
-mysql_data:/var/lib/mysql  
-Persistent storage for database files
-→ Your data survives container restarts.
-
-init.sql:/docker-entrypoint-initdb.d/  
-MySQL automatically runs any .sql file in this folder on first startup.
-
-d) Ports
-3306:3306 exposes MySQL to your host (optional but useful for tools like MySQL Workbench).
-
-e) Network
-Both services share the same internal network → they can talk to each other.
-
-🔗 6. How the Containers Communicate
-Inside the Docker network:
-
-API container hostname: python_api
-
-MySQL container hostname: mysql
-
-So the API connects to MySQL using:
-
-Code
-host="mysql"
-Docker Compose automatically provides:
-
-DNS resolution
-
-Internal networking
-
-Isolated environment
-
-This is why you don’t need IP addresses.
-
-7. How Data Persistence Works
-The volume:
-
-yaml
-volumes:
-  mysql_data:
-Maps to:
-
-Code
-/var/lib/mysql
-This is where MySQL stores:
-
-Tables
-
-Indexes
-
-Binary logs
-
-Metadata
-
-Even if you delete the MySQL container:
-
-Code
-docker rm -f mysql
-Your data remains in the volume.
-
-8. Running the Entire Stack
+8. Running the Project
 Code
 docker compose up --build
-What happens:
+Then visit:
 
-MySQL container starts
-
-MySQL initializes database + tables
-
-API container builds
-
-API connects to MySQL
-
-You can access:
-
-API root:
 http://localhost:8000
 
-Users endpoint:
 http://localhost:8000/users
