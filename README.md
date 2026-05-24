@@ -17,7 +17,7 @@ myproject/
 This structure separates your application layer, database layer, and orchestration layer.
 
 **2. The Python API (FastAPI)**
-'app/main.py'
+'''app/main.py'''
 This file defines your web API.
 
 What happens inside:
